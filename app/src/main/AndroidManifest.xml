@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -18,7 +21,7 @@
             android:label="RoadMap"
             android:theme="@style/Theme.Test">
         </activity>
-        <activity android:name="com.example.roadMap.WelcomeScreenActivity"
+        <activity android:name="com.example.roadMap.activities.WelcomeScreenActivity"
             android:exported="true"
             android:label="RoadMap"
             android:theme="@style/Theme.Test">
@@ -28,6 +31,14 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <meta-data
+            android:name="com.yandex.mobile.maps.API_KEY"
+            android:value="01b35dab-d1eb-436a-8c62-7dca91f1a3de"/>
+        <!-- Остальное содержимое -->
+
+
     </application>
+
 
 </manifest>
