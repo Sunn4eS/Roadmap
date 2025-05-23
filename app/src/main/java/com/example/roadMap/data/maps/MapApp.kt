@@ -203,8 +203,3 @@ fun rememberMapViewWithLifeCycle() : MapView {
     }
     return mapView
 }
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    YandexMapScreen()
-}
