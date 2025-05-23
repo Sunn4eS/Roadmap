@@ -4,15 +4,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog // Импортируем Dialog
 import androidx.compose.ui.window.DialogProperties // Импортируем DialogProperties
+import com.example.roadMap.data.utilities.AttachFileButton
 import com.yandex.mapkit.geometry.Point
 
 /**
@@ -28,9 +31,11 @@ fun CustomMapPointDialog(
     point: Point?,
     onDismissRequest: () -> Unit
 ) {
+    val pointName: String
+    val pointDescription: String
+
     if (showDialog && point != null) {
         Dialog(
-
             onDismissRequest = onDismissRequest,
             properties = DialogProperties(
                 dismissOnBackPress = true,
@@ -40,8 +45,9 @@ fun CustomMapPointDialog(
 
             Column(
                 modifier = Modifier
-                    .fillMaxWidth(0.8f)
+                    .fillMaxWidth()
                     .wrapContentHeight()
+                    .wrapContentWidth()
                     .background(Color.White, shape = RoundedCornerShape(12.dp)) // Фон вашего окна
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -51,12 +57,31 @@ fun CustomMapPointDialog(
                     text = "Добавление новой точки",
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
+
+//                OutlinedTextField()
+////                    value = name,
+////                    onValueChange = { name = it },
+////                    label = {Text("Введите ваше имя: ")},
+////                    modifier = Modifier
+////                        .fillMaxWidth(),
+////
+////                    )
+                Spacer(
+                    modifier = Modifier
+                        .height(8.dp))
                 Text("Широта: ${String.format("%.4f", point.latitude)}")
                 Text("Долгота: ${String.format("%.4f", point.longitude)}")
                 Spacer(modifier = Modifier.height(24.dp))
-                Button(onClick = onDismissRequest) {
-                    Text("Закрыть")
+                Row() {
+//                    Button(onClick = onDismissRequest) {
+//                        Text("Закрыть")
+//                    }
+//                    Button(onClick = onDismissRequest) {
+//                        Text("Сохранить")
+//                    }
+                   AttachFileButton(context = LocalContext.current)
                 }
+
             }
         }
     }
