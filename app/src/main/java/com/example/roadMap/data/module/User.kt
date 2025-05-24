@@ -1,4 +1,4 @@
-package com.example.roadMap.data.dataBase
+package com.example.roadMap.data.module
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
