@@ -23,7 +23,8 @@ class MainActivity : ComponentActivity() {
         MapKitFactory.setApiKey("01b35dab-d1eb-436a-8c62-7dca91f1a3de")
         enableEdgeToEdge()
         setContent {
-            YandexMapScreen()
+            val loggedInUsername = intent.getStringExtra("LOGGED_IN_USERNAME")
+            YandexMapScreen(loggedInUsername = loggedInUsername)
         }
     }
 }

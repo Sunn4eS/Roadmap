@@ -2,7 +2,6 @@ package com.example.roadMap.activities
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.Display
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -32,12 +31,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.roadMap.MainActivity
 import com.example.roadMap.data.dataBase.AppDatabase
-import com.example.roadMap.data.dataBase.UserEntity
+import com.example.roadMap.data.module.User
 import com.example.roadMap.data.utilities.comparePassword
 import com.example.roadMap.data.utilities.hashPassword
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class WelcomeScreenActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -122,15 +122,18 @@ fun LoginButton(name: String, password: String) {
                     if (user != null) {
                         val isPasswordCorrect = comparePassword(password, user.password)
                         if (isPasswordCorrect) {
-                            context.startActivity(Intent(context, MainActivity::class.java))
+                            withContext(Dispatchers.Main) { // Переключаемся на главный поток для UI
+                                Toast.makeText(context, "Вход выполнен успешно!", Toast.LENGTH_SHORT).show()
+                                val intent = Intent(context, MainActivity::class.java)
+                                intent.putExtra("LOGGED_IN_USERNAME", user.username) // Передаем имя пользователя
+                                context.startActivity(intent)
+                            }
                         } else {
-
-                            launch(Dispatchers.Main) {
+                            withContext(Dispatchers.Main) {
                                 Toast.makeText(context, "Неверное имя пользователя или пароль", Toast.LENGTH_SHORT).show()
                             }
                         }
                     } else {
-
                         launch(Dispatchers.Main) {
                             Toast.makeText(context, "Неверное имя пользователя или пароль", Toast.LENGTH_SHORT).show()
                         }
@@ -144,6 +147,7 @@ fun LoginButton(name: String, password: String) {
         Text("Войти")
     }
 }
+
 @Composable
 fun RegisterButton(name: String, password: String) {
     val context = LocalContext.current
@@ -154,13 +158,27 @@ fun RegisterButton(name: String, password: String) {
         modifier = Modifier.offset((10).dp),
         onClick = {
             if (!name.isEmpty() && !password.isEmpty()) {
-                val newUser = UserEntity(username = name, password = passwordHash)
                 CoroutineScope(Dispatchers.IO).launch {
-                    userDao.insertUser(newUser)
-                    context.startActivity(Intent(context, MainActivity::class.java))
+                    val existingUser = userDao.getUser(name)
+                    if (existingUser == null) {
+                        val passwordHash = hashPassword(password)
+                        val newUser = User(username = name, password = passwordHash)
+                        userDao.insertUser(newUser)
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, "Пользователь зарегистрирован!", Toast.LENGTH_SHORT).show()
+                            val intent = Intent(context, MainActivity::class.java)
+                            intent.putExtra("LOGGED_IN_USERNAME", newUser.username)
+                            context.startActivity(intent)
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, "Пользователь с таким именем уже существует", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 }
-            } else {
-                Toast.makeText(context, "Поля не заполнены", Toast.LENGTH_SHORT).show()
+            }
+            else {
+                Toast.makeText(context, "Поля не заполнены!", Toast.LENGTH_SHORT).show()
             }
         }
     ) {
@@ -190,6 +208,7 @@ fun WelcomeScreenPreview(){
             modifier = Modifier
                 .height(16.dp))
         OutlinedTextField(
+            singleLine = true,
             value = name,
             onValueChange = { name = it },
             label = {Text("Введите ваше имя: ")},
@@ -201,6 +220,7 @@ fun WelcomeScreenPreview(){
             modifier = Modifier
                 .height(8.dp))
         OutlinedTextField(
+            singleLine = true,
             value = password,
             onValueChange = {password = it},
             label = {Text("Введите пароль: ")},

@@ -79,10 +79,13 @@ dependencies {
 
     implementation ("androidx.room:room-runtime:2.6.1") // Основная библиотека Room
    // kapt("androidx.room:room-compiler:2.6.1")       // Компилятор Room (для генерации кода)
+    implementation("com.google.code.gson:gson:2.10.1")
 
     // Дополнительные зависимости (рекомендуется):
     implementation("androidx.room:room-ktx:2.6.1")    // Расширения Kotlin для Room (для корутин)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3") // Для работы с корутинами
+
+    implementation ("androidx.lifecycle:lifecycle-runtime-compose:2.8.0") // Убедитесь, что эта зависимость есть и версия соответствует lifecycle-runtime-ktx
 
 
     implementation(libs.androidx.core.ktx)

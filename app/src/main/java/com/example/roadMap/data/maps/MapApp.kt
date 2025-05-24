@@ -4,7 +4,10 @@ import android.Manifest
 import android.app.Application
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.util.Log
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -15,14 +18,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,18 +32,28 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color.Companion.Transparent
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.roadMap.data.dataBase.AppDatabase
+import com.example.roadMap.data.module.MapPoint
 import com.example.roadMap.data.utilities.screenCenterPixels
 import com.example.test.R
 import com.yandex.mapkit.MapKitFactory
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.CameraPosition
 import com.yandex.mapkit.mapview.MapView
-import kotlinx.coroutines.Job
+import com.yandex.runtime.image.ImageProvider
+import com.yandex.runtime.ui_view.ViewProvider
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flowOf
 
 
 class MapApp : Application() {
@@ -55,7 +65,7 @@ class MapApp : Application() {
 }
 
 @Composable
-fun YandexMapScreen() {
+fun YandexMapScreen(loggedInUsername: String?) {
     val context = LocalContext.current;
     val mapView = rememberMapViewWithLifeCycle()
     val screenCenter = screenCenterPixels()
@@ -63,9 +73,79 @@ fun YandexMapScreen() {
     val userLocationLayer = remember(mapView) { mapKit.createUserLocationLayer(mapView.mapWindow) }
     val coroutineScope = rememberCoroutineScope()
     val showMenuAtLocation = remember { mutableStateOf<Point?>(null) }
+    val mapPointDao = remember { AppDatabase.getDatabase(context).mapPointDao() } // Получаем DAO для MapPoint
 
+    var userMapPoints by remember { mutableStateOf(emptyList<MapPoint>()) }
+
+    // ИСПРАВЛЕНО: Ручной сбор Flow в LaunchedEffect
+    LaunchedEffect(loggedInUsername) {
+        loggedInUsername?.let { username ->
+            mapPointDao.getMapPointsForUser(username).collectLatest { points ->
+                userMapPoints = points
+            }
+        } ?: run {
+            userMapPoints = emptyList() // Очищаем список, если пользователь не авторизован
+        }
+    }
     val sharedPreferences = remember { context.getSharedPreferences("map_prefs", Context.MODE_PRIVATE) }
-    MapInteractionHandler(mapView, showMenuAtLocation,coroutineScope)
+    MapInteractionHandler(mapView, showMenuAtLocation,coroutineScope, context, loggedInUsername)
+
+//    LaunchedEffect(userMapPoints, mapView) {
+//        val mapObjects = mapView.map.mapObjects
+//        mapObjects.clear() // Очищаем старые объекты перед добавлением новых
+//
+//        userMapPoints.forEach { mapPoint ->
+//            val placemark = mapObjects.addPlacemark() // Создаем пустую метку
+//            placemark.geometry = mapPoint.toYandexPoint() // Устанавливаем геометрию
+//            placemark.setIcon(ImageProvider.fromResource(context, R.drawable.my_pos_pointer)) // Устанавливаем иконку
+//                // Например:
+//                // it.setIcon(ImageProvider.fromResource(context, R.drawable.your_point_icon))
+//                // it.setText(mapPoint.name) // Отобразить имя точки
+//
+//        }
+//    }
+
+
+    LaunchedEffect(loggedInUsername) {
+        loggedInUsername?.let { username ->
+            mapPointDao.getMapPointsForUser(username).collectLatest { points ->
+                userMapPoints = points
+                Log.d("YandexMapScreen", "Fetched ${points.size} map points for user: $username")
+            }
+        } ?: run {
+            userMapPoints = emptyList()
+            Log.d("YandexMapScreen", "No loggedInUsername, setting userMapPoints to empty.")
+        }
+    }
+    val density = LocalDensity.current
+    // Эффект для отображения точек на карте
+    LaunchedEffect(userMapPoints, mapView) {
+        val mapObjects = mapView.map.mapObjects
+        mapObjects.clear() // Очищаем старые объекты перед добавлением новых
+
+        Log.d("YandexMapScreen", "Attempting to display ${userMapPoints.size} map points on map.")
+
+        if (userMapPoints.isEmpty()) {
+            Log.d("YandexMapScreen", "No map points to display for loggedInUsername: $loggedInUsername")
+        }
+
+        userMapPoints.forEachIndexed { index, mapPoint ->
+            val yandexPoint = mapPoint.toYandexPoint()
+            Log.d("YandexMapScreen", "Displaying point $index (ViewProvider): Name=${mapPoint.label}, Lat=${yandexPoint.latitude}, Lon=${yandexPoint.longitude}")
+
+            val imageView = ImageView(context).apply {
+                setImageResource(R.drawable.my_pos_pointer)
+
+                layoutParams = ViewGroup.LayoutParams(60.dp.toPx(density).toInt(), 60.dp.toPx(density).toInt())
+            }
+
+            val viewProvider = ViewProvider(imageView)
+            val placemark = mapObjects.addPlacemark(yandexPoint, viewProvider)
+
+            placemark.setText(mapPoint.label)
+            // TODO: Вы можете настроить внешний вид метки здесь (цвет, размер и т.д.)
+        }
+    }
 
     fun saveLastKnownLocation(point: Point) {
         sharedPreferences.edit()
@@ -181,6 +261,10 @@ fun YandexMapScreen() {
 
 }
 
+private fun Dp.toPx(density: Density): Float {
+    return this.value * density.density
+}
+
 @Composable
 fun rememberMapViewWithLifeCycle() : MapView {
     val context = LocalContext.current
@@ -202,4 +286,10 @@ fun rememberMapViewWithLifeCycle() : MapView {
         }
     }
     return mapView
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DefaultPreview() {
+    YandexMapScreen(loggedInUsername = "preview_user")
 }
