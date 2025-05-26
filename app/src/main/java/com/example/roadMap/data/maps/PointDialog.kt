@@ -12,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -56,7 +57,7 @@ fun CustomMapPointDialog(
         initialMapPoint?.photoUris?.let { addAll(it) }
     }}
     val context = LocalContext.current
-
+    var fullScreenImageUri by remember { mutableStateOf<String?>(null) }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -177,7 +178,7 @@ fun CustomMapPointDialog(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            items(selectedPhotoUris.count()) { uriString ->
+                            items(selectedPhotoUris.toList()) { uriString ->
                                 val bitmap: Bitmap? = ImageStorageUtils.loadBitmapFromUri(context,
                                     uriString.toString()
                                 )
@@ -188,7 +189,7 @@ fun CustomMapPointDialog(
                                         modifier = Modifier
                                             .size(80.dp)
                                             .clickable {
-                                                // TODO: Возможно, добавить просмотр/удаление фото по клику
+                                                fullScreenImageUri = uriString.toString()
                                             }
                                     )
                                 } ?: run {
@@ -202,6 +203,30 @@ fun CustomMapPointDialog(
                                         Text("Нет фото")
                                     }
                                 }
+                                IconButton(
+                                    onClick = {
+                                        selectedPhotoUris.remove(uriString)
+                                        ImageStorageUtils.deleteImageFromInternalStorage(context, uriString)
+                                        Toast.makeText(context, "Фото удалено", Toast.LENGTH_SHORT).show()
+                                    },
+                                    modifier = Modifier
+                                        .offset(x = 4.dp, y = (-4).dp)
+                                        .size(20.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(18.dp)
+                                            .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(50)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_close_button),
+                                            contentDescription = "Удалить фото",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(8.dp) // <-- Размер иконки
+                                        )
+                                    }
+                                }
                             }
                         }
                         Spacer(modifier = Modifier.height(16.dp))
@@ -212,14 +237,12 @@ fun CustomMapPointDialog(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Button(onClick = {
-                            // Создаем или копируем MapPoint с обновленными данными
                             val mapPointToSave = initialMapPoint?.copy(
                                 label = pointLabel,
                                 description = pointDescription,
                                 photoUris = selectedPhotoUris.toList()
                             ) ?: MapPoint(
-                                //id = 0, // ID будет сгенерирован Room для новой точки
-                                userId = "", // userId и координаты будут заполнены в YandexMapScreen
+                                userId = "",
                                 label = pointLabel,
                                 description = pointDescription,
                                 latitude = 0.0,
@@ -235,6 +258,51 @@ fun CustomMapPointDialog(
 
 
 
+                }
+            }
+        }
+    }
+    if (fullScreenImageUri != null) {
+        Dialog(
+            onDismissRequest = { fullScreenImageUri = null },
+            properties = DialogProperties(
+                dismissOnBackPress = true,
+                dismissOnClickOutside = true,
+                usePlatformDefaultWidth = false // Позволяет диалогу занимать всю ширину
+            )
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.8f)),
+                contentAlignment = Alignment.Center
+            ) {
+                val bitmap: Bitmap? = ImageStorageUtils.loadBitmapFromUri(context, fullScreenImageUri!!)
+                bitmap?.let { bmp ->
+                    Image(
+                        bitmap = bmp.asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } ?: run {
+                    Text("Не удалось загрузить изображение", color = Color.White)
+                }
+
+                // Кнопка закрытия полноэкранного просмотра
+                IconButton(
+                    onClick = { fullScreenImageUri = null },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                        .size(48.dp)
+                        .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(50))
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_close_button),
+                        contentDescription = "Закрыть просмотр",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
                 }
             }
         }
