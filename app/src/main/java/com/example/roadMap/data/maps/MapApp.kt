@@ -82,51 +82,32 @@ fun YandexMapScreen(loggedInUsername: String?) {
     val mapPointDao = remember { AppDatabase.getDatabase(context).mapPointDao() } // Получаем DAO для MapPoint
     val mapObjects = remember(mapView) { mapView.map.mapObjects }
     val density = LocalDensity.current
-    val tapRadius = 20.dp
-    val tapRadiusMeters = with(density) { tapRadius.toPx() } * 2 // Примерное преобразование px в метры (очень грубое)
     var userMapPoints by remember { mutableStateOf(emptyList<MapPoint>()) }
 
-    GetPointFromMap(userMapPoints, context, tapRadiusMeters, mapView, mapObjects, loggedInUsername)
 
-    // ИСПРАВЛЕНО: Ручной сбор Flow в LaunchedEffect
+
     LaunchedEffect(loggedInUsername) {
-        loggedInUsername?.let { username ->
-            mapPointDao.getMapPointsForUser(username).collectLatest { points ->
+        loggedInUsername.let { username ->
+            mapPointDao.getMapPointsForUser(username.toString()).collectLatest { points ->
                 userMapPoints = points
             }
-        } ?: run {
-            userMapPoints = emptyList() // Очищаем список, если пользователь не авторизован
         }
     }
     val sharedPreferences = remember { context.getSharedPreferences("map_prefs", Context.MODE_PRIVATE) }
     MapInteractionHandler(mapView, showMenuAtLocation,coroutineScope, context, loggedInUsername)
+    GetPointFromMap(
+        userMapPoints = userMapPoints,
+        context = context,
+        mapView = mapView,
+        mapObjects = mapObjects, // Используем mapObjects из remember
+        loggedInUsername = loggedInUsername // Передаем currentUserId
+    )
 
-
-    LaunchedEffect(loggedInUsername) {
-        loggedInUsername?.let { username ->
-            mapPointDao.getMapPointsForUser(username).collectLatest { points ->
-                userMapPoints = points
-                Log.d("YandexMapScreen", "Fetched ${points.size} map points for user: $username")
-            }
-        } ?: run {
-            userMapPoints = emptyList()
-            Log.d("YandexMapScreen", "No loggedInUsername, setting userMapPoints to empty.")
-        }
-    }
-    // Эффект для отображения точек на карте
     LaunchedEffect(userMapPoints, mapView) {
         val mapObjects = mapView.map.mapObjects
-        mapObjects.clear() // Очищаем старые объекты перед добавлением новых
-
-        Log.d("YandexMapScreen", "Attempting to display ${userMapPoints.size} map points on map.")
-
-        if (userMapPoints.isEmpty()) {
-            Log.d("YandexMapScreen", "No map points to display for loggedInUsername: $loggedInUsername")
-        }
-
+        mapObjects.clear()
         userMapPoints.forEachIndexed { index, mapPoint ->
             val yandexPoint = mapPoint.toYandexPoint()
-            Log.d("YandexMapScreen", "Displaying point $index (ViewProvider): Name=${mapPoint.label}, Lat=${yandexPoint.latitude}, Lon=${yandexPoint.longitude}")
 
             val imageView = ImageView(context).apply {
                 setImageResource(R.drawable.ic_map_flag)
@@ -136,8 +117,7 @@ fun YandexMapScreen(loggedInUsername: String?) {
             val viewProvider = ViewProvider(imageView)
             val placemark = mapObjects.addPlacemark(yandexPoint, viewProvider)
 
-          //  placemark.setText(mapPoint.label)
-            // TODO: Вы можете настроить внешний вид метки здесь (цвет, размер и т.д.)
+            //  placemark.setText(mapPoint.label)
         }
     }
 

@@ -63,28 +63,26 @@ fun MapInteractionHandler(
     if (showMenuAtLocation.value != null) {
         CustomMapPointDialog(
             showDialog = true,
-            point = showMenuAtLocation.value,
+            initialMapPoint = null, // Для новой точки нет начальных данных
+            dialogTitle = "Новая точка",
             onDismissRequest = { showMenuAtLocation.value = null },
-            onSavePoint = { name, description, photoUris ->
-
-                val newMapPoint = MapPoint(
+            onSavePoint = {mapPointFromDialog -> // Теперь принимаем MapPoint
+                val newMapPoint = MapPoint( // Используем конструктор, чтобы Room сгенерировал ID
                     userId = loggedInUsername,
-                    label = name,
-                    description = description,
+                    label = mapPointFromDialog.label,
+                    description = mapPointFromDialog.description,
                     latitude = showMenuAtLocation.value!!.latitude,
                     longitude = showMenuAtLocation.value!!.longitude,
-                    photoUris = photoUris
+                    photoUris = mapPointFromDialog.photoUris
                 )
                 coroutineScope.launch(Dispatchers.IO) {
                     mapPointDao.insertMapPoint(newMapPoint)
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "Точка '${name}' сохранена!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Точка '${newMapPoint}' сохранена!", Toast.LENGTH_SHORT).show()
                         showMenuAtLocation.value = null
                     }
                 }
-            },
-            dialogLabel = "Новая точка",
-            initial = true
+            }
         )
     }
 

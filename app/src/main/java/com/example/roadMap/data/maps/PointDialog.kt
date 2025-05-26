@@ -36,28 +36,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.example.roadMap.data.module.MapPoint
 import com.example.roadMap.data.utilities.AttachFileButton
 import com.example.roadMap.data.utilities.ImageStorageUtils
 import com.example.test.R
-import com.yandex.mapkit.geometry.Point
 
 @Composable
 fun CustomMapPointDialog(
     showDialog: Boolean,
-    point: Point?,
+    initialMapPoint: MapPoint?, // ИЗМЕНЕНО: Теперь принимает MapPoint?
+    dialogTitle: String, // ИЗМЕНЕНО: Заголовок диалога
     onDismissRequest: () -> Unit,
-    onSavePoint: (name: String, description: String, photoUris: List<String>) -> Unit, // Новый callback
-    dialogLabel: String,
-    initial: Boolean,
+    onSavePoint: (mapPoint: MapPoint) -> Unit
 ) {
 
-    if (initial) {
-    } else {
-    }
-    var pointName by remember { mutableStateOf("") }
-    var pointDescription by remember { mutableStateOf("") } // Добавлено состояние для описания
-    val selectedPhotoUris = remember { mutableStateListOf<String>() } // Список URI выбранных фото
-
+    var pointLabel by remember(initialMapPoint) { mutableStateOf(initialMapPoint?.label ?: "") }
+    var pointDescription by remember(initialMapPoint) { mutableStateOf(initialMapPoint?.description ?: "") }
+    val selectedPhotoUris = remember(initialMapPoint) { mutableStateListOf<String>().apply {
+        initialMapPoint?.photoUris?.let { addAll(it) }
+    }}
     val context = LocalContext.current
 
 
@@ -88,7 +85,7 @@ fun CustomMapPointDialog(
 
     }
 
-    if (showDialog && point != null) {
+    if (showDialog) {
         Dialog(
             onDismissRequest = onDismissRequest,
             properties = DialogProperties(
@@ -117,7 +114,7 @@ fun CustomMapPointDialog(
                         Modifier.weight(1f)
                     )
                     Text(
-                        text = dialogLabel,
+                        text = dialogTitle,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 8.dp)
@@ -146,9 +143,9 @@ fun CustomMapPointDialog(
                 ) {
                     OutlinedTextField(
                         singleLine = true,
-                        value = pointName,
-                        onValueChange = { pointName = it },
-                        label = {Text("Название: ")},
+                        value = pointLabel,
+                        onValueChange = { pointLabel = it },
+                        label = {Text("Имя: ")},
                         modifier = Modifier
                             .fillMaxWidth(),
                     )
@@ -157,8 +154,8 @@ fun CustomMapPointDialog(
                             .height(8.dp)
                     )
                     OutlinedTextField(
-                        value = pointName,
-                        onValueChange = { pointName = it },
+                        value = pointDescription,
+                        onValueChange = { pointDescription = it },
                         label = {Text("Описание: ")},
                         modifier = Modifier
                             .fillMaxWidth(),
@@ -167,6 +164,13 @@ fun CustomMapPointDialog(
                         modifier = Modifier
                             .height(8.dp)
                     )
+                    if (initialMapPoint != null) {
+                        Text("Широта: ${String.format("%.4f", initialMapPoint.latitude)}")
+                        Text("Долгота: ${String.format("%.4f", initialMapPoint.longitude)}")
+                    } else {
+                        // Для новой точки, координаты будут взяты из showMenuAtLocation в YandexMapScreen
+                        Text("Координаты будут определены при сохранении")
+                    }
 
                     if (selectedPhotoUris.isNotEmpty()) {
                         LazyRow(
@@ -207,8 +211,23 @@ fun CustomMapPointDialog(
                         horizontalArrangement = Arrangement.SpaceAround,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-
-                        Button(onClick = {onSavePoint(pointName, pointDescription, selectedPhotoUris.toList()) }) {
+                        Button(onClick = {
+                            // Создаем или копируем MapPoint с обновленными данными
+                            val mapPointToSave = initialMapPoint?.copy(
+                                label = pointLabel,
+                                description = pointDescription,
+                                photoUris = selectedPhotoUris.toList()
+                            ) ?: MapPoint(
+                                //id = 0, // ID будет сгенерирован Room для новой точки
+                                userId = "", // userId и координаты будут заполнены в YandexMapScreen
+                                label = pointLabel,
+                                description = pointDescription,
+                                latitude = 0.0,
+                                longitude = 0.0,
+                                photoUris = selectedPhotoUris.toList()
+                            )
+                            onSavePoint(mapPointToSave)
+                        }) {
                             Text("Сохранить")
                         }
                         AttachFileButton(onClick = {imagePickerLauncher.launch("image/*")})
@@ -225,6 +244,15 @@ fun CustomMapPointDialog(
 @Preview
 @Composable
 fun mapDialogCheck() {
-    val init = Point(23.2, 23.2)
-    CustomMapPointDialog(true, init, onDismissRequest = {}, onSavePoint = { _, _, _ -> }, "Новая точка", initial = true)
+    val initPoint = MapPoint(id = 1, userId = "preview_user", label = "Тестовая точка", description = "Это описание тестовой точки.", latitude = 53.9000, longitude = 27.5667, photoUris = listOf("uri1", "uri2"))
+    CustomMapPointDialog(
+        showDialog = true,
+        initialMapPoint = initPoint,
+        onDismissRequest = {},
+        onSavePoint = { mapPoint ->
+            // Логика сохранения/обновления для предпросмотра
+            println("Сохранена/обновлена точка: ${mapPoint.label}")
+        },
+        dialogTitle = "Предварительный просмотр"
+    )
 }
