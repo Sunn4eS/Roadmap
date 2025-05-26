@@ -48,7 +48,8 @@ fun CustomMapPointDialog(
     initialMapPoint: MapPoint?, // ИЗМЕНЕНО: Теперь принимает MapPoint?
     dialogTitle: String, // ИЗМЕНЕНО: Заголовок диалога
     onDismissRequest: () -> Unit,
-    onSavePoint: (mapPoint: MapPoint) -> Unit
+    onSavePoint: (mapPoint: MapPoint) -> Unit,
+    onDeletePoint: ((mapPoint: MapPoint) -> Unit)? = null
 ) {
 
     var pointLabel by remember(initialMapPoint) { mutableStateOf(initialMapPoint?.label ?: "") }
@@ -254,9 +255,19 @@ fun CustomMapPointDialog(
                         }
                         AttachFileButton(onClick = {imagePickerLauncher.launch("image/*")})
                     }
-
-
-
+                    if (initialMapPoint != null && onDeletePoint != null) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = {
+                                onDeletePoint.invoke(initialMapPoint) // Вызываем лямбду удаления
+                                // onDismissRequest() // Диалог будет закрыт после выполнения onDeletePoint
+                            },
+                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = Color.Red),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Удалить метку", color = Color.White)
+                        }
+                    }
                 }
             }
         }
@@ -310,16 +321,26 @@ fun CustomMapPointDialog(
 
 @Preview
 @Composable
-fun mapDialogCheck() {
-    val initPoint = MapPoint(id = 1, userId = "preview_user", label = "Тестовая точка", description = "Это описание тестовой точки.", latitude = 53.9000, longitude = 27.5667, photoUris = listOf("uri1", "uri2"))
+fun MapDialogCheck() {
+    val initPoint = MapPoint(
+        id = 1,
+        userId = "preview_user",
+        label = "Тестовая точка",
+        description = "Это описание тестовой точки.",
+        latitude = 53.9000,
+        longitude = 27.5667,
+        photoUris = listOf()
+    )
     CustomMapPointDialog(
         showDialog = true,
         initialMapPoint = initPoint,
         onDismissRequest = {},
         onSavePoint = { mapPoint ->
-            // Логика сохранения/обновления для предпросмотра
             println("Сохранена/обновлена точка: ${mapPoint.label}")
         },
-        dialogTitle = "Предварительный просмотр"
+        dialogTitle = "Предварительный просмотр",
+        onDeletePoint = { mapPoint ->
+            println("Удалена точка: ${mapPoint.label}")
+        }
     )
 }

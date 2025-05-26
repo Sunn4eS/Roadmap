@@ -185,6 +185,15 @@ fun GetPointFromMap(
                         }
                     }
                 }
+            },
+            onDeletePoint = { mapPointToDelete -> // <-- ДОБАВЬТЕ ЭТОТ БЛОК
+                coroutineScope.launch(Dispatchers.IO) {
+                    mapPointDao.deleteMapPoint(mapPointToDelete) // Вызываем метод удаления
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Точка '${mapPointToDelete.label}' удалена!", Toast.LENGTH_SHORT).show()
+                        onDismissDialog() // Закрываем диалог после удаления
+                    }
+                }
             }
         )
 //        CustomMapPointDialog(

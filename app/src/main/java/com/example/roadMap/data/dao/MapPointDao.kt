@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Delete
 import com.example.roadMap.data.module.MapPoint
 import kotlinx.coroutines.flow.Flow
 
@@ -16,13 +17,14 @@ interface MapPointDao {
     @Update
     suspend fun updateMapPoint(mapPoint: MapPoint): Int
 
+    @Delete
+    suspend fun deleteMapPoint(mapPoint: MapPoint)
+
     @Query("SELECT * FROM map_points WHERE userId = :userId")
     fun getMapPointsForUser(userId: String): Flow<List<MapPoint>>
 
     @Query("SELECT * FROM map_points")
     fun getAllMapPoints(): Flow<List<MapPoint>>
 
-    @Query("DELETE FROM map_points WHERE id = :pointId")
-    fun deleteMapPointById(pointId: Long): Int
 
 }
