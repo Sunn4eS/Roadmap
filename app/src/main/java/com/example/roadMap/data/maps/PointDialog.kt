@@ -193,7 +193,6 @@ fun CustomMapPointDialog(
                                             }
                                     )
                                 } ?: run {
-                                    // Placeholder if image fails to load
                                     Box(
                                         modifier = Modifier
                                             .size(80.dp)
