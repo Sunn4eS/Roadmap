@@ -47,12 +47,17 @@ fun CustomMapPointDialog(
     point: Point?,
     onDismissRequest: () -> Unit,
     onSavePoint: (name: String, description: String, photoUris: List<String>) -> Unit, // Новый callback
-    userId: String?
-
+    dialogLabel: String,
+    initial: Boolean,
 ) {
+
+    if (initial) {
+    } else {
+    }
     var pointName by remember { mutableStateOf("") }
     var pointDescription by remember { mutableStateOf("") } // Добавлено состояние для описания
     val selectedPhotoUris = remember { mutableStateListOf<String>() } // Список URI выбранных фото
+
     val context = LocalContext.current
 
 
@@ -112,7 +117,7 @@ fun CustomMapPointDialog(
                         Modifier.weight(1f)
                     )
                     Text(
-                        text = "Новая точка",
+                        text = dialogLabel,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 8.dp)
@@ -221,5 +226,5 @@ fun CustomMapPointDialog(
 @Composable
 fun mapDialogCheck() {
     val init = Point(23.2, 23.2)
-    CustomMapPointDialog(true, init, onDismissRequest = {}, onSavePoint = { _, _, _ -> }, userId = "test_user_id")
+    CustomMapPointDialog(true, init, onDismissRequest = {}, onSavePoint = { _, _, _ -> }, "Новая точка", initial = true)
 }

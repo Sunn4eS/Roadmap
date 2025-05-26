@@ -15,6 +15,10 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.ui.res.painterResource
 import com.example.test.R
+import kotlin.math.acos
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 fun hashPassword(password: String): String {
     val bytes = password.toByteArray()
@@ -41,4 +45,8 @@ fun screenDimensionsDisplay(): PointF {
 @Composable
 fun screenCenterPixels(): PointF {
     return PointF((screenDimensionsDisplay().x / 2), screenDimensionsDisplay().y / 2)
+}
+
+fun distance(x1: Double, y1: Double, x2: Double, y2: Double): Double {
+    return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1))
 }

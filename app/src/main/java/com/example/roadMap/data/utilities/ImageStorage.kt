@@ -28,19 +28,18 @@ object ImageStorageUtils {
         }
     }
 
-
     fun loadBitmapFromUri(context: Context, uriString: String): Bitmap? {
         return try {
             val uri = uriString.toUri()
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
                 BitmapFactory.decodeStream(inputStream)
+
             }
         } catch (e: Exception) {
             e.printStackTrace()
             null
         }
     }
-
 
     fun deleteImageFromInternalStorage(context: Context, uriString: String): Boolean {
         return try {

@@ -38,9 +38,6 @@ fun MapInteractionHandler(
     loggedInUsername: String?
 ) {
     val mapPointDao = remember { AppDatabase.getDatabase(context).mapPointDao() } // Получаем DAO для MapPoint
-
-    var userId by remember { mutableStateOf<String?>(null) }
-
     val longPressMapListener = remember {
         object : InputListener {
             override fun onMapTap(map: Map, point: Point) {
@@ -63,12 +60,11 @@ fun MapInteractionHandler(
             mapView.map.removeInputListener(longPressMapListener)
         }
     }
-    if (showMenuAtLocation.value != null) { // Используем .value для MutableState
+    if (showMenuAtLocation.value != null) {
         CustomMapPointDialog(
             showDialog = true,
             point = showMenuAtLocation.value,
             onDismissRequest = { showMenuAtLocation.value = null },
-            userId = loggedInUsername,
             onSavePoint = { name, description, photoUris ->
 
                 val newMapPoint = MapPoint(
@@ -86,7 +82,9 @@ fun MapInteractionHandler(
                         showMenuAtLocation.value = null
                     }
                 }
-            }
+            },
+            dialogLabel = "Новая точка",
+            initial = true
         )
     }
 

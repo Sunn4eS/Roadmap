@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -44,11 +45,15 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.roadMap.data.dataBase.AppDatabase
 import com.example.roadMap.data.module.MapPoint
+import com.example.roadMap.data.utilities.distance
 import com.example.roadMap.data.utilities.screenCenterPixels
 import com.example.test.R
 import com.yandex.mapkit.MapKitFactory
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.CameraPosition
+import com.yandex.mapkit.map.MapObjectCollection
+import com.yandex.mapkit.map.MapObjectTapListener
+import com.yandex.mapkit.map.PlacemarkMapObject
 import com.yandex.mapkit.mapview.MapView
 import com.yandex.runtime.image.ImageProvider
 import com.yandex.runtime.ui_view.ViewProvider
@@ -73,9 +78,15 @@ fun YandexMapScreen(loggedInUsername: String?) {
     val userLocationLayer = remember(mapView) { mapKit.createUserLocationLayer(mapView.mapWindow) }
     val coroutineScope = rememberCoroutineScope()
     val showMenuAtLocation = remember { mutableStateOf<Point?>(null) }
-    val mapPointDao = remember { AppDatabase.getDatabase(context).mapPointDao() } // Получаем DAO для MapPoint
 
+    val mapPointDao = remember { AppDatabase.getDatabase(context).mapPointDao() } // Получаем DAO для MapPoint
+    val mapObjects = remember(mapView) { mapView.map.mapObjects }
+    val density = LocalDensity.current
+    val tapRadius = 20.dp
+    val tapRadiusMeters = with(density) { tapRadius.toPx() } * 2 // Примерное преобразование px в метры (очень грубое)
     var userMapPoints by remember { mutableStateOf(emptyList<MapPoint>()) }
+
+    GetPointFromMap(userMapPoints, context, tapRadiusMeters, mapView, mapObjects, loggedInUsername)
 
     // ИСПРАВЛЕНО: Ручной сбор Flow в LaunchedEffect
     LaunchedEffect(loggedInUsername) {
@@ -90,21 +101,6 @@ fun YandexMapScreen(loggedInUsername: String?) {
     val sharedPreferences = remember { context.getSharedPreferences("map_prefs", Context.MODE_PRIVATE) }
     MapInteractionHandler(mapView, showMenuAtLocation,coroutineScope, context, loggedInUsername)
 
-//    LaunchedEffect(userMapPoints, mapView) {
-//        val mapObjects = mapView.map.mapObjects
-//        mapObjects.clear() // Очищаем старые объекты перед добавлением новых
-//
-//        userMapPoints.forEach { mapPoint ->
-//            val placemark = mapObjects.addPlacemark() // Создаем пустую метку
-//            placemark.geometry = mapPoint.toYandexPoint() // Устанавливаем геометрию
-//            placemark.setIcon(ImageProvider.fromResource(context, R.drawable.my_pos_pointer)) // Устанавливаем иконку
-//                // Например:
-//                // it.setIcon(ImageProvider.fromResource(context, R.drawable.your_point_icon))
-//                // it.setText(mapPoint.name) // Отобразить имя точки
-//
-//        }
-//    }
-
 
     LaunchedEffect(loggedInUsername) {
         loggedInUsername?.let { username ->
@@ -117,7 +113,6 @@ fun YandexMapScreen(loggedInUsername: String?) {
             Log.d("YandexMapScreen", "No loggedInUsername, setting userMapPoints to empty.")
         }
     }
-    val density = LocalDensity.current
     // Эффект для отображения точек на карте
     LaunchedEffect(userMapPoints, mapView) {
         val mapObjects = mapView.map.mapObjects
@@ -134,15 +129,14 @@ fun YandexMapScreen(loggedInUsername: String?) {
             Log.d("YandexMapScreen", "Displaying point $index (ViewProvider): Name=${mapPoint.label}, Lat=${yandexPoint.latitude}, Lon=${yandexPoint.longitude}")
 
             val imageView = ImageView(context).apply {
-                setImageResource(R.drawable.my_pos_pointer)
-
+                setImageResource(R.drawable.ic_map_flag)
                 layoutParams = ViewGroup.LayoutParams(60.dp.toPx(density).toInt(), 60.dp.toPx(density).toInt())
             }
 
             val viewProvider = ViewProvider(imageView)
             val placemark = mapObjects.addPlacemark(yandexPoint, viewProvider)
 
-            placemark.setText(mapPoint.label)
+          //  placemark.setText(mapPoint.label)
             // TODO: Вы можете настроить внешний вид метки здесь (цвет, размер и т.д.)
         }
     }
@@ -190,7 +184,6 @@ fun YandexMapScreen(loggedInUsername: String?) {
             }
         }
     }
-
 
     LaunchedEffect(Unit) {
         when {
@@ -260,6 +253,7 @@ fun YandexMapScreen(loggedInUsername: String?) {
 
 
 }
+
 
 private fun Dp.toPx(density: Density): Float {
     return this.value * density.density
