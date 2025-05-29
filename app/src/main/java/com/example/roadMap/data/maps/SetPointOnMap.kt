@@ -14,21 +14,11 @@ import com.yandex.mapkit.map.Map
 import com.yandex.mapkit.mapview.MapView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.*
 import com.example.roadMap.data.dataBase.AppDatabase
-import com.example.roadMap.data.module.MapPoint
+import com.example.roadMap.data.model.MapPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-
-/**
- * Composable-функция для обработки взаимодействий пользователя с картой (InputListener).
- * В частности, обрабатывает долгое нажатие для отображения меню.
- *
- * @param mapView Экземпляр MapView, к которому будет добавлен слушатель.
- * @param showMenuAtLocation Состояние, управляющее видимостью и позицией меню по долгому нажатию.
- * @param coroutineScope CoroutineScope для запуска корутин, например, для задержек.
- */
 @Composable
 fun MapInteractionHandler(
     mapView: MapView,
@@ -85,34 +75,7 @@ fun MapInteractionHandler(
             }
         )
     }
-
 }
-
-
-//@Composable
-//fun LongTapMenu(showMenuAtLocation: MutableState<Point?>) {
-//    if (showMenuAtLocation.value != null) {
-//        AlertDialog(
-//
-//            onDismissRequest = { showMenuAtLocation.value = null },
-//            title = { Text("Меню по долгому нажатию") },
-//            text = {
-//                Column {
-//                    Text("Координаты:")
-//                    Text("Широта: ${String.format("%.4f", showMenuAtLocation.value!!.latitude)}")
-//                    Text("Долгота: ${String.format("%.4f", showMenuAtLocation.value!!.longitude)}")
-//                }
-//            },
-//            confirmButton = {
-//                Button(onClick = { showMenuAtLocation.value = null }) {
-//                    Text("Закрыть")
-//                }
-//            },
-//
-//
-//        )
-//    }
-//}
 
 @Preview
 @Composable

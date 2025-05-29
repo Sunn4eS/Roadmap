@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.devtools.ksp")
+    id("com.google.devtools.ksp") version "2.1.21-2.0.1"
 }
 
 android {
@@ -74,6 +74,8 @@ dependencies {
         // optional - Paging 3 Integration
         implementation("androidx.room:room-paging:$room_version")
     }
+
+    implementation("com.squareup.okhttp3:okhttp:4.10.0")
 
     implementation("com.yandex.android:maps.mobile:4.15.0-lite")
 

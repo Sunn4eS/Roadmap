@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.example.roadMap.data.module.MapPoint
+import com.example.roadMap.data.model.MapPoint
 import com.example.roadMap.data.utilities.AttachFileButton
 import com.example.roadMap.data.utilities.ImageStorageUtils
 import com.example.test.R

@@ -15,6 +15,8 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.ui.res.painterResource
 import com.example.test.R
+import java.io.File
+import java.io.FileOutputStream
 import kotlin.math.acos
 import kotlin.math.cos
 import kotlin.math.sin
@@ -49,4 +51,22 @@ fun screenCenterPixels(): PointF {
 
 fun distance(x1: Double, y1: Double, x2: Double, y2: Double): Double {
     return sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1))
+}
+
+fun uriToFile(uri: Uri, context: Context): File? {
+    if (uri.scheme == "file") {
+        return File(uri.path!!)
+    }
+    return try {
+        context.contentResolver.openInputStream(uri)?.use { inputStream ->
+            val tempFile = File.createTempFile("image_", null, context.cacheDir)
+            FileOutputStream(tempFile).use { outputStream ->
+                inputStream.copyTo(outputStream)
+            }
+            tempFile
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
 }

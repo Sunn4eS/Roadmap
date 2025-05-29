@@ -6,7 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import androidx.room.Delete
-import com.example.roadMap.data.module.MapPoint
+import com.example.roadMap.data.model.MapPoint
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -24,7 +24,7 @@ interface MapPointDao {
     fun getMapPointsForUser(userId: String): Flow<List<MapPoint>>
 
     @Query("SELECT * FROM map_points")
-    fun getAllMapPoints(): Flow<List<MapPoint>>
+    suspend fun getAllMapPoints(): List<MapPoint>
 
 
 }

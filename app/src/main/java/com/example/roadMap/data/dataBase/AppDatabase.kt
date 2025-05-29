@@ -7,12 +7,12 @@ import androidx.room.Room
 import androidx.room.TypeConverters
 import com.example.roadMap.data.dao.MapPointDao
 import com.example.roadMap.data.dao.UserDao
-import com.example.roadMap.data.database.UriConverters
-import com.example.roadMap.data.module.MapPoint
-import com.example.roadMap.data.module.User
+import com.example.roadMap.data.model.MapPoint
+import com.example.roadMap.data.model.User
+import com.example.roadMap.data.utilities.StringListConverter
 
-@Database(entities = [User::class, MapPoint::class], version = 3)
-@TypeConverters(UriConverters::class)
+@Database(entities = [User::class, MapPoint::class], version = 5)
+@TypeConverters(StringListConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun mapPointDao(): MapPointDao
@@ -27,7 +27,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "app_database"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }

@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.Application
 import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.util.Log
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -44,21 +43,20 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.roadMap.data.dataBase.AppDatabase
-import com.example.roadMap.data.module.MapPoint
-import com.example.roadMap.data.utilities.distance
+import com.example.roadMap.data.model.MapPoint
 import com.example.roadMap.data.utilities.screenCenterPixels
 import com.example.test.R
 import com.yandex.mapkit.MapKitFactory
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.CameraPosition
-import com.yandex.mapkit.map.MapObjectCollection
-import com.yandex.mapkit.map.MapObjectTapListener
-import com.yandex.mapkit.map.PlacemarkMapObject
 import com.yandex.mapkit.mapview.MapView
-import com.yandex.runtime.image.ImageProvider
 import com.yandex.runtime.ui_view.ViewProvider
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.count
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 class MapApp : Application() {
@@ -82,18 +80,23 @@ fun YandexMapScreen(loggedInUsername: String?) {
     val mapPointDao = remember { AppDatabase.getDatabase(context).mapPointDao() } // Получаем DAO для MapPoint
     val mapObjects = remember(mapView) { mapView.map.mapObjects }
     val density = LocalDensity.current
-    var userMapPoints by remember { mutableStateOf(emptyList<MapPoint>()) }
-
-
-
-    LaunchedEffect(loggedInUsername) {
-        loggedInUsername.let { username ->
-            mapPointDao.getMapPointsForUser(username.toString()).collectLatest { points ->
-                userMapPoints = points
-            }
-        }
-    }
+    val userMapPoints by (loggedInUsername?.let { mapPointDao.getMapPointsForUser(it) }
+        ?: flowOf(emptyList())).collectAsStateWithLifecycle(initialValue = emptyList(), lifecycleOwner = LocalLifecycleOwner.current)
     val sharedPreferences = remember { context.getSharedPreferences("map_prefs", Context.MODE_PRIVATE) }
+
+
+
+//    LaunchedEffect(loggedInUsername) {
+//        loggedInUsername.let { username ->
+//            mapPointDao.getMapPointsForUser(username.toString()).collectLatest { points ->
+//                userMapPoints = points
+//            }
+//        }
+//    }
+
+
+
+
     MapInteractionHandler(mapView, showMenuAtLocation,coroutineScope, context, loggedInUsername)
     GetPointFromMap(
         userMapPoints = userMapPoints,
@@ -119,21 +122,6 @@ fun YandexMapScreen(loggedInUsername: String?) {
 
             //  placemark.setText(mapPoint.label)
         }
-    }
-
-    fun saveLastKnownLocation(point: Point) {
-        sharedPreferences.edit()
-            .putFloat("last_lat", point.latitude.toFloat())
-            .putFloat("last_lon", point.longitude.toFloat())
-            .apply()
-    }
-    fun loadLastKnownLocation(): Point? {
-        if (sharedPreferences.contains("last_lat") && sharedPreferences.contains("last_lon")) {
-            val lat = sharedPreferences.getFloat("last_lat", 0f).toDouble()
-            val lon = sharedPreferences.getFloat("last_lon", 0f).toDouble()
-            return Point(lat, lon)
-        }
-        return null
     }
 
     val requestPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -229,8 +217,6 @@ fun YandexMapScreen(loggedInUsername: String?) {
         }
 
     }
-
-
 
 }
 
