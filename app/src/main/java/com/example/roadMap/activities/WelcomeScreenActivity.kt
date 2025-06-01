@@ -58,7 +58,15 @@ fun WelcomeScreen() {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.Top
+    ){
+        ExportAndUploadDataButton(coroutineScope)
+    }
 
     Column(
         modifier = Modifier
@@ -105,15 +113,13 @@ fun WelcomeScreen() {
         Row () {
             LoginButton(name, password);
             RegisterButton(name, password);
-            ExportAndUploadDataButton(coroutineScope)
-
         }
     }
 }
 
 
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun WelcomeScreenPreview(){
     WelcomeScreen()

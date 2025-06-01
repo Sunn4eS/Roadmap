@@ -2,24 +2,14 @@ package com.example.roadMap.data.utilities
 
 import android.content.Context
 import android.graphics.PointF
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import java.security.MessageDigest
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Icon
-import androidx.compose.material.icons.Icons
-import androidx.compose.ui.platform.LocalContext
-import android.content.Intent
-import android.net.Uri
-import androidx.compose.ui.res.painterResource
-import com.example.test.R
 import java.io.File
 import java.io.FileOutputStream
-import kotlin.math.acos
-import kotlin.math.cos
-import kotlin.math.sin
 import kotlin.math.sqrt
 
 fun hashPassword(password: String): String {
