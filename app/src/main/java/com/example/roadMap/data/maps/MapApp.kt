@@ -84,26 +84,13 @@ fun YandexMapScreen(loggedInUsername: String?) {
         ?: flowOf(emptyList())).collectAsStateWithLifecycle(initialValue = emptyList(), lifecycleOwner = LocalLifecycleOwner.current)
     val sharedPreferences = remember { context.getSharedPreferences("map_prefs", Context.MODE_PRIVATE) }
 
-
-
-//    LaunchedEffect(loggedInUsername) {
-//        loggedInUsername.let { username ->
-//            mapPointDao.getMapPointsForUser(username.toString()).collectLatest { points ->
-//                userMapPoints = points
-//            }
-//        }
-//    }
-
-
-
-
     MapInteractionHandler(mapView, showMenuAtLocation,coroutineScope, context, loggedInUsername)
     GetPointFromMap(
         userMapPoints = userMapPoints,
         context = context,
         mapView = mapView,
-        mapObjects = mapObjects, // Используем mapObjects из remember
-        loggedInUsername = loggedInUsername // Передаем currentUserId
+        mapObjects = mapObjects,
+        loggedInUsername = loggedInUsername
     )
 
     LaunchedEffect(userMapPoints, mapView) {
@@ -120,7 +107,6 @@ fun YandexMapScreen(loggedInUsername: String?) {
             val viewProvider = ViewProvider(imageView)
             val placemark = mapObjects.addPlacemark(yandexPoint, viewProvider)
 
-            //  placemark.setText(mapPoint.label)
         }
     }
 
@@ -148,7 +134,7 @@ fun YandexMapScreen(loggedInUsername: String?) {
 
             }
             else -> {
-                android.widget.Toast.makeText(context, "Разрешение на местоположение отклонено", android.widget.Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Разрешение на местоположение отклонено", Toast.LENGTH_SHORT).show()
             }
         }
     }

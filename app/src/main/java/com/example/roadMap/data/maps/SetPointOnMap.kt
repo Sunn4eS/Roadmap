@@ -27,23 +27,18 @@ fun MapInteractionHandler(
     context: Context,
     loggedInUsername: String?
 ) {
-    val mapPointDao = remember { AppDatabase.getDatabase(context).mapPointDao() } // Получаем DAO для MapPoint
+    val mapPointDao = remember { AppDatabase.getDatabase(context).mapPointDao() }
     val longPressMapListener = remember {
         object : InputListener {
             override fun onMapTap(map: Map, point: Point) {
-                // При касании карты, закрываем меню, если оно открыто
                 showMenuAtLocation.value = null
             }
             override fun onMapLongTap(map: Map, point: Point) {
-                // При долгом нажатии, показываем меню с координатами
                 showMenuAtLocation.value = point
-
-
             }
         }
     }
 
-    // Добавляем InputListener к карте при создании Composable и удаляем при его уничтожении
     DisposableEffect(mapView) {
         mapView.map.addInputListener(longPressMapListener)
         onDispose {
@@ -53,11 +48,11 @@ fun MapInteractionHandler(
     if (showMenuAtLocation.value != null) {
         CustomMapPointDialog(
             showDialog = true,
-            initialMapPoint = null, // Для новой точки нет начальных данных
+            initialMapPoint = null,
             dialogTitle = "Новая точка",
             onDismissRequest = { showMenuAtLocation.value = null },
-            onSavePoint = {mapPointFromDialog -> // Теперь принимаем MapPoint
-                val newMapPoint = MapPoint( // Используем конструктор, чтобы Room сгенерировал ID
+            onSavePoint = {mapPointFromDialog ->
+                val newMapPoint = MapPoint(
                     userId = loggedInUsername,
                     label = mapPointFromDialog.label,
                     description = mapPointFromDialog.description,
@@ -82,5 +77,4 @@ fun MapInteractionHandler(
 fun defPrev() {
     val initialLocation = Point(55.75, 37.62)
     val showMenuAtLocation = remember { mutableStateOf<Point?>(initialLocation) }
-   // LongTapMenu(showMenuAtLocation)
 }
